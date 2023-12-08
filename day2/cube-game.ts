@@ -23,19 +23,28 @@ import path from 'node:path'
 function sumIds(sum: number, game: string) {
   if (game.length) {
     const id = game.replace(/Game (\d+):.*/, '$1')
-    if (isValidGame(game.replace(/Game \d+: (.*)/, '$1'))) sum += parseInt(id)
+    if (checkGame(game.replace(/Game \d+: (.*)/, '$1'), true)) sum += parseInt(id)
   }
   return sum
+}
+
+function sumPowers(sumOfProducts: number, game: string) {
+  if (game.length) {
+    const gameObj = checkGame(game.replace(/Game \d+: (.*)/, '$1'), false)
+    sumOfProducts += Object.values(gameObj).reduce((acc, cur) => acc * cur)
+  }
+  return sumOfProducts
 }
 
 const validValues: Record<string, number> = {
   red: 12,
   green: 13,
   blue: 14
-};
+}
 
-function isValidGame(game:string ): boolean {
+function checkGame(game:string, validate: boolean = false): boolean | typeof minValidNumber {
   let val = '', prop = ''
+  const minValidNumber: Record<string, number> = {}
 
   for (let i = 0; i < game.length; i += 2) {
     while (game[i] !== ' ') {
@@ -45,11 +54,12 @@ function isValidGame(game:string ): boolean {
     while (game[i] !== ',' && game[i] !== ';' && i < game.length) {
       prop += game[i++]
     }
-    if (!validValues.hasOwnProperty(prop) || parseInt(val) > validValues[prop]) return false
+    if (validate && (!validValues.hasOwnProperty(prop) || parseInt(val) > validValues[prop])) return false
+    else minValidNumber[prop] = minValidNumber.hasOwnProperty(prop) ? Math.max(minValidNumber[prop], parseInt(val)) : parseInt(val)
     val = ''
     prop = ''
   }
-  return true
+  return validate || minValidNumber
 }
 
 function getGames(): string[] {
@@ -57,4 +67,5 @@ function getGames(): string[] {
     .split('\n')
 }
 
-console.log(getGames().reduce(sumIds, 0))
+console.log('sum of ids', getGames().reduce(sumIds, 0))
+console.log('sum of products',getGames().reduce(sumPowers, 0))
