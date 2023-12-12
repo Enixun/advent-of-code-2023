@@ -51,40 +51,19 @@ class Almanac {
       const res = /^(?<name>\w+-to-\w+) map:\n(?<maps>(\d+ \d+ \d+\n?)+)/g.exec(almanac[i])
       if (res !== null && res.groups) {
         const mapperName = res.groups.name.replace(/-([a-z])/g, (_m, g1) => g1.toUpperCase())
-        const mapObj = new AlmanacMap(res.groups.maps)
-        this[mapperName] = mapObj.map.bind(mapObj)
+        const aMap = new AlmanacMap(res.groups.maps)
+        this[mapperName] = aMap.map.bind(aMap)
+        const getterName = res.groups.name.replace(/^.*-(\w+)$/, '$1s')
+        const srcName = res.groups.name.replace(/^(\w+)-.*$/, '$1s')
+        Object.defineProperty(this, getterName, {
+          get() {
+            return this[srcName]?.map((el: number) => this[mapperName](el))
+          } 
+        })
       }
     }
-  }
-
-  get soils() {
-    return this.seeds?.map(el => this.seedToSoil(el))
-  }
-
-  get fertilizers() {
-    return this.soils?.map(el => this.soilToFertilizer(el))
-  }
-
-  get waters() {
-    return this.fertilizers?.map(el => this.fertilizerToWater(el))
-  }
-
-  get lights() {
-    return this.waters?.map(el => this.waterToLight(el))
-  }
-
-  get temperatures() {
-    return this.lights?.map(el => this.lightToTemperature(el))
-  }
-
-  get humidities() {
-    return this.temperatures?.map(el => this.temperatureToHumidity(el))
-  }
-
-  get locations() {
-    return this.humidities?.map(el => this.humidityToLocation(el))
   }
 }
 
 const test = new Almanac('source.txt')
-console.log(test.locations?.sort((a, b) => a - b))
+console.log(test.locations?.sort((a: number, b: number) => a - b)[0])
