@@ -27,23 +27,55 @@ class TimeTable {
   }
 }
 
-function calcBoatResults(raceTime: number) {
+function calcBoatResults(raceTime: number, r?: BoatRaceRecord) {
   const results: BoatRaceRecord[] = []
-  for (let buttonHoldTime = 0; buttonHoldTime <= raceTime; buttonHoldTime++) {
-    results.push({
+  const mid = (raceTime - 1) / 2 // to count in event of odd, will round up mid and only include this number once, all others will be doubled
+  for (let buttonHoldTime = Math.ceil(mid); buttonHoldTime >= 0; buttonHoldTime--) {
+    const race = {
       time: raceTime,
       buttonHoldTime,
       distance: buttonHoldTime * (raceTime - buttonHoldTime)
-    })
+    }
+    if (r && r.distance >= race.distance) break
+    results.push(race)
+    if (buttonHoldTime <= mid) {
+      results.unshift({ ...race, buttonHoldTime: raceTime - buttonHoldTime })
+    }
   }
   return results
 }
 
-const boatRaceRecords = new TimeTable('times.txt')
-const waysToWin = boatRaceRecords.records?.map((r: Record) => {
-  return calcBoatResults(r.time).filter(brr => brr.distance > r.distance)
-})
+function findMarginOfErr(rec: BoatRaceRecord) {
+  const halfway = (rec.time - 1) / 2
+  let l = 0, r = Math.ceil(halfway)
+  const offset = r > halfway ? 1 : 0
 
-console.log(waysToWin?.reduce((acc: number, cur: BoatRaceRecord[]) => {
-  return acc * cur.length
-}, 1))
+  while (l < r) {
+    const mid = l + Math.floor((r - l) / 2)
+    // console.log('l mid r', l, mid, r)
+    const distance = mid * (rec.time - mid)
+    // console.log('distance', distance, rec.distance)
+    if (distance <= rec.distance) {
+      l = mid + 1
+    } else {
+      r = mid
+    }
+  }
+
+  return 2 * (Math.ceil(halfway) - l) + offset
+
+}
+
+const boatRaceRecords = new TimeTable('times_fixed.txt')
+// const waysToWin = boatRaceRecords.records?.map((r: Record) => {
+//   return calcBoatResults(r.time, r as BoatRaceRecord)
+// })
+
+// console.log(waysToWin?.reduce((acc: number, cur: BoatRaceRecord[]) => {
+//   return acc * cur.length
+// }, 1))
+
+const numWaysToWin = boatRaceRecords.records?.map((r: Record) => {
+  return findMarginOfErr(r as BoatRaceRecord)
+})
+console.log(numWaysToWin?.reduce((acc, cur) => acc * cur))
