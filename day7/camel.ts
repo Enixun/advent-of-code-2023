@@ -10,7 +10,7 @@ const cardDict: { [k: string]: number } = {
   '8': 8,
   '9': 9,
   T: 10,
-  J: 11,
+  J: 1,
   Q: 12,
   K: 13,
   A: 14
@@ -28,23 +28,30 @@ enum HandTypes {
 
 function getHandType(cards: string): HandTypes {
   const cardCount: { [k: keyof typeof cardDict]: number } = {}
+  Object.defineProperty(cardCount, 'jCount', {
+    enumerable: false,
+    writable: true,
+    value: 0
+  })
   for (let i = 0; i < cards.length; i++) {
     const card = cards[i]
     if (cardDict[card] === undefined) throw new Error(`Invalid card: ${cards} is not a valid Hand`)
-    cardCount[card] =  cardCount[card] + 1 || 1
+    if (card !== 'J') cardCount[card] =  cardCount[card] + 1 || 1
+    else cardCount.jCount += 1
   }
 
-  const keys = Object.keys(cardCount)
-  // console.log(keys.length, keys)
-  switch (keys.length){
+  const values = Object.values(cardCount).sort((a, b) => b - a)
+  values[0] += cardCount.jCount
+  // console.log(cards, cardCount, 'jCount', cardCount.jCount)
+  switch (values.length){
     case 1:
       return HandTypes.Five
     case 2:
-      return Object.values(cardCount).includes(4) 
+      return values.includes(4) 
         ? HandTypes.Four 
         : HandTypes.Full
     case 3: 
-      return Object.values(cardCount).includes(3)
+      return values.includes(3)
         ? HandTypes.Three
         : HandTypes.Two
     case 4:
@@ -87,6 +94,6 @@ console.log(new Game('hands.txt').hands.sort((a, b) => {
   return a.type - b.type
 }).reduce((acc, cur, i) => {
   const val = (i + 1) * cur.bid
-  console.log('Type:', cur.type, 'Rank:', i + 1, cur.cards, acc, '+', i + 1, '*', cur.bid, '=', acc, '+',  val, '=', acc + val)
+  // console.log('Type:', cur.type, 'Rank:', i + 1, cur.cards, acc, '+', i + 1, '*', cur.bid, '=', acc, '+',  val, '=', acc + val)
   return acc + val
 }, 0))
