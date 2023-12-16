@@ -2,7 +2,7 @@ import { parseFile } from "../utils/fileLoader"
 
 const readings = (parseFile('readings.txt', /\r?\n/) as string[]).map(r => r.split(' ').map(n => Number(n)))
 
-function predictNext(seq: number[]) {
+function getRates(seq: number[]) {
   let noChange = false
   const steps: number[][] = [ seq ]
   
@@ -17,11 +17,19 @@ function predictNext(seq: number[]) {
     steps.push(ratesOfChange)
   }
 
-  for (let i = steps.length - 2; i >= 0; i--) {
-    steps[i].push(steps[i][steps[i].length - 1] + steps[i + 1][steps[i + 1].length - 1])
-  }
-
-  return steps[0][steps[0].length - 1]
+  return steps
 }
 
-console.log(readings.reduce((acc, cur) => acc + predictNext(cur), 0))
+function predict(seq: number[], dir: 'next' | 'previous') {
+  const steps = getRates(seq)
+
+  for (let i = steps.length - 2; i >= 0; i--) {
+    if (dir === 'next') steps[i].push(steps[i][steps[i].length - 1] + steps[i + 1][steps[i + 1].length - 1])
+    else steps[i].unshift(steps[i][0] - steps[i + 1][0])
+  }
+
+  return steps[0][dir === 'next' ? steps[0].length - 1 : 0]
+}
+
+console.log(readings.reduce((acc, cur) => acc + predict(cur, 'next'), 0))
+console.log(readings.reduce((acc, cur) => acc + predict(cur, 'previous'), 0))
