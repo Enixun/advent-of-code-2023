@@ -11,18 +11,20 @@ export class Matrix {
   matrix: string[][]
 
   constructor(filename: string) {
-    const contents = parseFile(filename)
+    const contents = parseFile(filename, /\r?\n/) as string[]
 
-    this.matrix = [];
-    let row: string[] = [];
-    for (let i = 0; i < contents.length; i++) {
-      if (contents[i] === '\n') {
-        this.matrix.push(row)
-        row = []
-      } else {
-        row.push(contents[i])
-      }
-    }
+    // this.matrix = [];
+    // let row: string[] = [];
+    // for (let i = 0; i < contents.length; i++) {
+    //   if (contents[i] === '\n') {
+    //     this.matrix.push(row)
+    //     row = []
+    //   } else {
+    //     row.push(contents[i])
+    //   }
+    // }
+
+    this.matrix = contents.map(row => row.split(''))
   }
 
   traverse(cb: (val: string, position: Coordinates, mat: typeof this) => void | TraverseFunction): void {
